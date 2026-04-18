@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASAT 2026 - SDN NGASEM I - LITERASI DIGITAL</title>
+    <style>
+        :root {
+            --primary: #0891b2; --primary-dark: #0e7490; --accent: #f59e0b;
+            --bg: #f1f5f9; --text-main: #1e293b; --white: #ffffff;
+            --danger: #ef4444; --success: #10b981; --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; transition: all 0.2s ease; font-family: 'Inter', system-ui, sans-serif; }
+        body { background: var(--bg); margin: 0; user-select: none; color: var(--text-main); overflow-x: hidden; }
+
+        #login-page {
+            position: fixed; inset: 0; background: linear-gradient(135deg, #0891b2, #164e63); 
+            display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px;
+        }
+        .login-card { background: white; padding: 40px; border-radius: 20px; width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); text-align: center; }
+        .logo-tutwuri { width: 80px; height: auto; margin-bottom: 20px; }
+
+        header { 
+            background: var(--white); border-bottom: 2px solid var(--border); padding: 0 25px; 
+            display: none; justify-content: space-between; align-items: center; height: 75px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .timer-box { background: #fff1f2; padding: 10px 20px; border-radius: 10px; border: 1px solid #ffe4e6; font-weight: 800; font-size: 1.3rem; color: var(--danger); font-family: monospace; }
+
+        .main-wrapper { display: none; min-height: calc(100vh - 75px); padding: 25px; gap: 25px; max-width: 1400px; margin: 0 auto; flex-wrap: wrap; }
+        .soal-section { flex: 3; min-width: 300px; background: white; border-radius: 15px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .soal-content { flex: 1; padding: 30px; font-size: 1.15rem; line-height: 1.7; overflow-y: auto; }
+        
+        .passage-box {
+            background: #fdf6e3; border-left: 5px solid var(--accent); padding: 15px;
+            margin-bottom: 20px; border-radius: 8px; font-style: italic;
+            white-space: pre-line; color: #444; border: 1px solid #e6dec9;
+        }
+
+        .opt-item { border: 1px solid var(--border); padding: 15px; margin-bottom: 12px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 15px; }
+        .opt-item:hover { background: #f8fafc; border-color: var(--primary); }
+        .opt-item.selected { background: #ecfeff; border: 2px solid var(--primary); font-weight: 600; }
+        .opt-label { min-width: 32px; height: 32px; border-radius: 50%; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold; }
+        .selected .opt-label { background: var(--primary); color: white; border-color: var(--primary); }
+
+        input[type="text"], textarea { width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 12px; font-size: 1rem; margin-top: 10px; }
+        textarea { height: 150px; resize: none; }
+
+        .sidebar { flex: 1; min-width: 280px; background: white; border-radius: 15px; padding: 20px; border: 1px solid var(--border); height: fit-content; position: sticky; top: 100px; }
+        .grid-nomor { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
+        .btn-nomor { aspect-ratio: 1/1; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 8px; font-weight: 700; font-size: 0.85rem; background: white; }
+        .btn-nomor.active { border: 2px solid var(--primary); color: var(--primary); }
+        .btn-nomor.filled { background: var(--primary); color: white; border-color: var(--primary); }
+
+        #result-page { display: none; max-width: 500px; margin: 50px auto; background: white; padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 10000; justify-content: center; align-items: center; flex-direction: column; }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div id="loading" class="loading-overlay">
+    <div style="border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;"></div>
+    <p style="margin-top: 15px; font-weight: bold;">Sedang memproses...</p>
+</div>
+
+<div id="login-page">
+    <div class="login-card">
+        <img src="https://awsimages.detik.net.id/community/media/visual/2023/05/02/lambang-tut-wuri-handayani.png?w=700&q=90" class="logo-tutwuri" alt="Logo">
+        <h1 style="color: var(--primary); margin: 0; font-size: 1.5rem;">ASAT LITERASI DIGITAL</h1>
+        <p style="margin-top: 5px; font-weight: 600; color: #64748b;">SD NEGERI NGASEM I TAHUN 2026</p>
+        
+        <div style="text-align: left; margin-top: 25px;">
+            <label style="font-weight: bold; font-size: 0.85rem;">Nama Lengkap</label>
+            <input type="text" id="stu-name" placeholder="Nama sesuai absen..." autocomplete="off">
+            <label style="font-weight: bold; font-size: 0.85rem; display:block; margin-top:15px">Nomor Peserta</label>
+            <input type="text" id="stu-id" placeholder="Contoh: 2026-LD-001" autocomplete="off">
+        </div>
+        
+        <button onclick="startExam()" style="width: 100%; padding: 15px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: 700; cursor: pointer; margin-top:20px">MULAI UJIAN</button>
+    </div>
+</div>
+
+<header id="exam-header">
+    <div>
+        <small style="color: #64748b; font-weight: bold;">PESERTA:</small>
+        <div id="user-display" style="font-weight: 800; color: var(--primary);">NAMA PESERTA</div>
+    </div>
+    <div class="timer-box" id="timer">90:00</div>
+</header>
+
+<div class="main-wrapper" id="exam-body">
+    <div class="soal-section">
+        <div style="padding: 15px 25px; background: #f8fafc; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-weight: 700;">
+            <span id="header-no">SOAL NO 1</span>
+            <span id="q-type" style="background: #e0f2fe; color: var(--primary); font-size: 0.7rem; padding: 4px 10px; border-radius: 6px;">TIPE</span>
+        </div>
+        <div class="soal-content">
+            <div id="passage-container"></div> 
+            <div id="img-container"></div>
+            <div id="q-text" style="font-weight:600; margin-bottom:20px"></div>
+            <div id="ans-area"></div>
+        </div>
+        <div style="padding: 20px 25px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: #f8fafc;">
+            <button id="btn-prev" onclick="nav(-1)" style="padding: 12px 20px; border: none; border-radius: 8px; background: #e2e8f0; font-weight: 700; cursor: pointer;">KEMBALI</button>
+            <button id="btn-next" onclick="nav(1)" style="flex-grow: 1; padding: 12px 20px; border: none; border-radius: 8px; background: var(--primary); color: white; font-weight: 700; cursor: pointer;">BERIKUTNYA</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 10px; display: flex; justify-content: space-between;">
+            <span>NAVIGASI SOAL</span> 
+            <span id="progress" style="color: var(--primary);">0/50</span>
+        </div>
+        <div class="grid-nomor" id="nav-grid"></div>
+        <button onclick="confirmFinish()" style="width: 100%; margin-top: 25px; padding: 15px; border-radius: 10px; border: none; background: var(--danger); color: white; font-weight: 700; cursor: pointer;">SELESAI & KIRIM</button>
+    </div>
+</div>
+
+<div id="result-page">
+    <h2 style="color: var(--primary);">UJIAN BERHASIL DIKIRIM</h2>
+    <p>Terima kasih telah mengerjakan ujian Literasi Digital.</p>
+    <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0; border: 1px solid var(--border); text-align: left;">
+        <p><b>Catatan:</b> Nilai Pilihan Ganda dikoreksi otomatis, sedangkan Isian dan Uraian akan diperiksa manual oleh Guru.</p>
+    </div>
+    <button onclick="clearAndReload()" style="width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--primary); color: white; cursor: pointer; font-weight: bold;">KELUAR</button>
+</div>
+
+<script>
+    // GANTI URL INI DENGAN URL GOOGLE SCRIPT ANDA
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxg2ZnhG0PdpfqvX6pE5ONfw1Bb29wSkMb544bgSKtNzSHKHE9DUOiSHog4g1_Jolmc/exec"; 
+
+    const bankSoal = [
+        // PILIHAN GANDA (1-35)
+        { id: 1, type: 'pg', q: "Pernyataan berikut ini yang benar tentang definisi penipuan digital adalah ....", o: ["penipuan melalui pesawat telepon", "bentuk tindak kejahatan dengan menggunakan teknologi informasi", "tindakan kejahatan dengan cara hipnotis", "penipuan dengan iming-iming hadiah"], a: "B" },
+        { id: 2, type: 'pg', q: "Penipuan digital yang dilakukan dengan cara meretas untuk mengumpulkan informasi secara ilegal dan mengakses aplikasi yang menyimpan data penting pengguna disebut ....", o: ["online calling", "online banking", "online sniffing", "online surfing"], a: "C" },
+        { id: 3, type: 'pg', q: "Modus penipuan yang dilakukan dengan mengirimkan email atau pesan palsu yang seolah-olah berasal dari lembaga atau perusahaan ternama disebut ....", o: ["sniffing", "pharming", "money mule", "phishing"], a: "D" },
+        { id: 4, type: 'pg', passage: "1. Kehilangan uang\n2. Kepercayaan\n3. Kehilangan barang\n4. Reputasi\n5. Trauma", q: "Dari daftar di atas yang termasuk akibat kerugian non materiil dari penipuan digital adalah ....", o: ["1, 2, 3", "1, 3, 5", "2, 4, 5", "3, 4, 5"], a: "C" },
+        { id: 5, type: 'pg', passage: "1. Phishing\n2. Sniffing\n3. Hacking\n4. Cloning\n5. Pharming", q: "Dari daftar di atas yang termasuk modus penipuan digital adalah...", o: ["1, 2, 3", "1, 2, 5", "3, 4, 5", "2, 3, 4"], a: "B" },
+        { id: 6, type: 'pg', q: "Modus penipuan yang dilakukan dengan menggunakan korban untuk menerima atau mengirimkan uang hasil kejahatan disebut ....", o: ["Phishing", "Social engineering", "Sniffing", "Money mule"], a: "D" },
+        { id: 7, type: 'pg', q: "Modus penipuan yang dilakukan dengan memanfaatkan psikologi korban untuk mendapatkan informasi atau melakukan tindakan yang menguntungkan pelaku disebut ....", o: ["Phishing", "Social engineering", "Sniffing", "Money mule"], a: "B" },
+        { id: 8, type: 'pg', q: "Jika ada kiriman link undangan di nomer HP kalian dari nomor yang tidak dikenal, yang sebaiknya kita lakukan adalah ....", o: ["membuka link tersebut", "berbalas pesan dengan nomor tersebut", "melaporkan kepada orang tua atau guru", "menelepon nomor tersebut"], a: "C" },
+        { id: 9, type: 'pg', q: "Salah satu cara untuk mencegah terjadinya penipuan digital adalah ....", o: ["membuka link yang dikirim oleh nomor tidak dikenal", "Membuat kata sandi yang biasa", "membagikan data pribadi kita apabila diminta orang lain", "memperbarui aplikasi antivirus atau firewall secara berkala"], a: "D" },
+        { id: 10, type: 'pg', q: "Cara untuk membuat kata sandi yang kuat dan unik adalah ....", o: ["6 karakter, termasuk huruf besar, huruf kecil dan simbol.", "6 karakter, termasuk huruf besar, huruf kecil, angka, dan simbol.", "12 karakter, termasuk huruf besar, huruf kecil, dan angka", "12 karakter, termasuk huruf besar, huruf kecil, angka, dan simbol."], a: "D" },
+        { id: 11, type: 'pg', q: "Hal yang harus dihindari agar tidak terkena penipuan scam adalah ....", o: ["Membiarkan link yang dikirim seseorang", "menjaga identitas pribadi kita", "memberitahu PIN kita ke orang lain", "menjaga nama baik kita"], a: "C" },
+        { id: 12, type: 'pg', q: "Yang kalian ketahui tentang data pribadi adalah ....", o: ["data yang berisi tentang jumlah peserta lomba menyanyi.", "data yang berisi tentang jumlah penduduk suatu desa", "data yang berisi nama, alamat, nomor telepon, dan email .", "data yang berisi tentang jumlah pedagang yang ada di pasar"], a: "C" },
+        { id: 13, type: 'pg', q: "Saat bermain media social, Nana melihat temannya membagikan postingan tentang cara mendapatkan uang dengan cepat. Yang sebaiknya Nana lakukan adalah....", o: ["langsung mengikuti tanpa berfikir panjang", "mengingatkan teman untuk berhati-hati", "mencari informasi tambahan dari sumber lain", "mengikuti info tersebut karena tidak enak"], a: "B" },
+        { id: 14, type: 'pg', q: "Alasan kita harus sering mem backup data adalah....", o: ["untuk mencegah kehilangan data", "agar tidak lupa", "untuk memodifikasi data", "untuk memudahkan dalam mencari data"], a: "A" },
+        { id: 15, type: 'pg', q: "Berikut ini yang termasuk jenis penipuan digital adalah ....", o: ["cooking", "hacking", "pharming", "diving"], a: "C" },
+        { id: 16, type: 'pg', q: "Penipuan digital secara hukum diatur dalam ....", o: ["KUHP dan UU ITE", "UUD 1945", "KUHP", "Perpres No 5 Th. 2024"], a: "A" },
+        { id: 17, type: 'pg', q: "Cara mewaspadai phishing dapat kita kenali dengan tanda-tanda email yang biasanya berisi .....", o: ["sumber dana", "SMS", "foto pelaku", "situs web phishing"], a: "D" },
+        { id: 18, type: 'pg', q: "Fitur Autentifikasi dua faktor (2FA) adalah ....", o: ["proses pengunduhan data", "pengecekan akun secara tatap muka", "proses pengecekan identitas pengguna untuk akses akun online", "proses meminta mengirimkan data"], a: "C" },
+        { id: 19, type: 'pg', q: "Modus penipuan yang dilakukan dengan meretas jaringan internet untuk mencuri data pribadi korban disebut ....", o: ["phishing", "sniffing", "pharming", "money mule"], a: "B" },
+        { id: 20, type: 'pg', q: "Istilah jejak digital dalam bahasa Inggris adalah ....", o: ["Footprint", "Electronic footprint", "Digital footprint", "Shadow"], a: "C" },
+        { id: 21, type: 'pg', passage: "1) Perbarui perangkat lunak secara berkala\n2) Menggunakan password lemah\n3) Klik link masuk sembarangan\n4) Menonaktifkan pop-up", q: "Cara mencegah dan mengatasi malware adalah ....", o: ["1", "2", "3", "4"], a: "A" },
+        { id: 22, type: 'pg', q: "Jejak data yang kita tinggalkan secara daring dengan tidak sengaja dan tanpa sepengetahuan kita disebut ....", o: ["jejak digital", "jejak digital aktif", "jejak digital pasif", "phishing"], a: "C" },
+        { id: 23, type: 'pg', q: "Istilah lain dari akun palsu adalah ...", o: ["Hoaks", "Server", "Fake account", "Shadow"], a: "C" },
+        { id: 24, type: 'pg', q: "Salah satu alasan pihak tidak bertanggung jawab membuat akun palsu dari jejak digital kita adalah ....", o: ["menjadikan kita terkenal", "menaikkan jumlah pengikut", "menyebarkan informasi palsu", "meningkatkan penjualan"], a: "C" },
+        { id: 25, type: 'pg', q: "Jejak digital bisa berupa informasi pribadi dan non pribadi. Contoh jejak digital non pribadi adalah ....", o: ["alamat", "video", "hobi", "tanggal lahir"], a: "C" },
+        { id: 26, type: 'pg', q: "Temanmu sering posting hal positif yang menginspirasi. Tanggapanmu adalah ....", o: ["tidak peduli", "biasa saja", "mengcopy untuk cari followers", "meniru melakukan hal positif"], a: "D" },
+        { id: 27, type: 'pg', q: "Pengertian dari jejak digital pasif adalah ....", o: ["data sengaja diunggah ke dunia maya", "jejak ditinggalkan tidak sengaja dan tanpa sepengetahuan kita", "jejak digital dibuat secara sadar", "aktifitas terekam di server"], a: "B" },
+        { id: 28, type: 'pg', q: "Yang merupakan contoh dari jejak digital pasif adalah ...", o: ["Riwayat penelusuran", "Pesan teks", "Pesan video", "Posting berita"], a: "A" },
+        { id: 29, type: 'pg', q: "Dampak positif menulis komentar baik terhadap toko online bagi pembeli lain adalah ....", o: ["meningkatkan kepercayaan pembeli lain", "rendahnya antusias pembeli", "kurangnya keyakinan pembeli", "menurunnya pembelian"], a: "A" },
+        { id: 30, type: 'pg', q: "Menu pada browser yang digunakan untuk menelusuri jejak digital adalah ....", o: ["WhatsApp", "Situs", "History", "Server"], a: "C" },
+        { id: 31, type: 'pg', q: "Salah satu penyalahgunaan jejak digital adalah ....", o: ["Meningkatkan penjualan", "Pem-bully-an dan eksploitasi", "Komentar positif", "Meyakinkan pembeli"], a: "B" },
+        { id: 32, type: 'pg', q: "Setelah meminjam HP teman untuk mencari tugas, sebaiknya Ayu ....", o: ["menghapus history penelusuran", "membiarkan history terbuka", "mematikan medsos", "keluar lewat jalan pintas"], a: "A" },
+        { id: 33, type: 'pg', q: "Agar jejak digital baik, sebelum mengunggah informasi sebaiknya kita ....", o: ["berhati-hati bahasa dan konten", "upload konten SARA", "tidak perlu perhatikan bahasa", "upload konten negatif"], a: "A" },
+        { id: 34, type: 'pg', q: "Orang lain menggunakan informasi kita untuk masuk ke akun pribadi kita disebut ....", o: ["Berita bohong", "Peretasan", "Pembullyan", "Pelecehan"], a: "B" },
+        { id: 35, type: 'pg', q: "Sikap siswa SD yang meninggalkan jejak digital positif adalah ....", o: ["mengunggah gambar mendidik", "mengunjungi situs dewasa", "membuat status marah", "mengunggah video negatif"], a: "A" },
+
+        // ISIAN (36-45)
+        { id: 36, type: 'isian', q: "Suatu bentuk kejahatan dengan menggunakan teknologi informasi disebut ....", a: "penipuan digital" },
+        { id: 37, type: 'isian', q: "Akibat non-materiil dari penipuan digital selain kehilangan uang adalah ....", a: "trauma" },
+        { id: 38, type: 'isian', q: "Modus penipuan dengan mengubah website resmi menjadi palsu disebut ....", a: "pharming" },
+        { id: 39, type: 'isian', q: "Meretas jaringan internet untuk mencuri data pribadi disebut ....", a: "sniffing" },
+        { id: 40, type: 'isian', q: "Memanfaatkan psikologi korban untuk mendapatkan informasi disebut ....", a: "social engineering" },
+        { id: 41, type: 'isian', q: "Jika ada pelanggaran data, kita harus segera lapor kepada ....", a: "orang tua" },
+        { id: 42, type: 'isian', q: "Istilah bahasa Inggris untuk rekam jejak digital adalah ....", a: "digital footprint" },
+        { id: 43, type: 'isian', q: "Menu browser yang mencatat aktivitas kita disebut ....", a: "history" },
+        { id: 44, type: 'isian', q: "Jejak digital diklasifikasi menjadi dua yaitu jejak aktif dan ....", a: "pasif" },
+        { id: 45, type: 'isian', q: "Menyebarkan berita bohong disebut juga menyebarkan berita ....", a: "hoax" },
+
+        // URAIAN (46-50)
+        { id: 46, type: 'uraian', q: "Sebutkan 5 jenis modus penipuan digital yang kalian ketahui!", a: "" },
+        { id: 47, type: 'uraian', q: "Sebutkan 3 cara yang dapat dilakukan untuk menjaga kerahasiaan data digital?", a: "" },
+        { id: 48, type: 'uraian', q: "Jelaskan sikap yang seharusnya dilakukan jika melihat riwayat browsing orang lain di perangkat yang kita pinjam!", a: "" },
+        { id: 49, type: 'uraian', q: "Sebutkan 2 fungsi mengaktifkan fitur privasi pada akun media sosial!", a: "" },
+        { id: 50, type: 'uraian', q: "Sebutkan 3 langkah yang dapat kita lakukan untuk menghindari penyalahgunaan jejak digital!", a: "" }
+    ];
+
+    let current = 0;
+    let answers = {};
+
+    window.onbeforeunload = function() {
+        return "Data ujian mungkin hilang jika Anda keluar.";
+    };
+
+    async function startExam() {
+        const name = document.getElementById('stu-name').value.trim();
+        const id = document.getElementById('stu-id').value.trim();
+        
+        if(!name || !id) { 
+            alert("Nama dan Nomor harus diisi!"); 
+            return; 
+        }
+
+        document.getElementById('loading').style.display = 'flex';
+
+        try {
+            const response = await fetch(`${SCRIPT_URL}?action=checkStatus&no_peserta=${id}`);
+            const status = await response.text();
+
+            if (status.includes("exists")) {
+                alert("Maaf, Nomor Peserta ini sudah digunakan.");
+                document.getElementById('loading').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('user-display').innerText = name.toUpperCase();
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('exam-header').style.display = 'flex';
+            document.getElementById('exam-body').style.display = 'flex';
+            
+            const saved = localStorage.getItem('asat_answers_digital');
+            if(saved) answers = JSON.parse(saved);
+
+            initNav();
+            render();
+            startTimer(90);
+            
+        } catch (err) {
+            document.getElementById('loading').style.display = 'none';
+            alert("Gagal koneksi ke server. Pastikan internet aktif.");
+        }
+    }
+
+    function initNav() {
+        const grid = document.getElementById('nav-grid');
+        grid.innerHTML = "";
+        bankSoal.forEach((_, i) => {
+            const btn = document.createElement('div');
+            btn.className = 'btn-nomor';
+            btn.id = 'bn-' + i;
+            btn.innerText = i + 1;
+            btn.onclick = () => { current = i; render(); };
+            grid.appendChild(btn);
+        });
+    }
+
+    function render() {
+        const s = bankSoal[current];
+        document.getElementById('header-no').innerText = "SOAL NO " + (current + 1);
+        document.getElementById('q-type').innerText = s.type.toUpperCase();
+        document.getElementById('q-text').innerHTML = s.q;
+        
+        const passageCon = document.getElementById('passage-container');
+        passageCon.innerHTML = s.passage ? `<div class="passage-box">${s.passage}</div>` : "";
+
+        const imgContainer = document.getElementById('img-container');
+        imgContainer.innerHTML = s.img ? `<img src="${s.img}" class="q-image" style="max-width:100%; border-radius:10px; margin-bottom:15px">` : "";
+
+        const area = document.getElementById('ans-area');
+        area.innerHTML = "";
+
+        if(s.type === 'pg') {
+            s.o.forEach((opt, i) => {
+                const char = String.fromCharCode(65 + i);
+                const div = document.createElement('div');
+                const isSelected = answers[current] === char;
+                div.className = 'opt-item' + (isSelected ? ' selected' : '');
+                div.innerHTML = `<div class="opt-label">${char}</div><div>${opt}</div>`;
+                div.onclick = () => { saveAnswer(char); };
+                area.appendChild(div);
+            });
+        } else if(s.type === 'isian') {
+            area.innerHTML = `<input type="text" id="ans-input" value="${answers[current]||''}" oninput="saveAnswer(this.value)" placeholder="Ketik jawaban singkat...">`;
+        } else {
+            area.innerHTML = `<textarea oninput="saveAnswer(this.value)" placeholder="Tuliskan jawaban uraian secara lengkap...">${answers[current]||''}</textarea>`;
+        }
+        updateUI();
+    }
+
+    function saveAnswer(val) {
+        answers[current] = val;
+        localStorage.setItem('asat_answers_digital', JSON.stringify(answers));
+        if(bankSoal[current].type === 'pg') render();
+        updateUI();
+    }
+
+    function updateUI() {
+        let count = 0;
+        bankSoal.forEach((_, i) => {
+            const btn = document.getElementById('bn-' + i);
+            if(btn) {
+                if(answers[i] && answers[i] !== "") { 
+                    btn.classList.add('filled'); 
+                    count++; 
+                } else {
+                    btn.classList.remove('filled');
+                }
+                if(current === i) btn.classList.add('active'); else btn.classList.remove('active');
+            }
+        });
+        document.getElementById('progress').innerText = count + "/50";
+        document.getElementById('btn-prev').disabled = current === 0;
+        document.getElementById('btn-next').innerText = current === 49 ? "KONFIRMASI SELESAI" : "BERIKUTNYA";
+    }
+
+    function nav(d) {
+        if(current + d >= 0 && current + d < 50) { current += d; render(); }
+        else if (current + d === 50) confirmFinish();
+    }
+
+    function confirmFinish() {
+        const count = Object.values(answers).filter(a => a !== "").length;
+        const msg = count < 50 ? `Ada ${50 - count} soal belum dijawab. Tetap kirim?` : "Yakin ingin mengakhiri ujian?";
+        if(confirm(msg)) submitData();
+    }
+
+    function submitData() {
+        document.getElementById('loading').style.display = 'flex';
+        window.onbeforeunload = null;
+
+        let pgBenar = 0;
+        bankSoal.forEach((s, i) => {
+            if(s.type === 'pg' && answers[i] === s.a) pgBenar++;
+        });
+
+        const formData = new URLSearchParams();
+        formData.append('nama', document.getElementById('stu-name').value);
+        formData.append('nomor_peserta', document.getElementById('stu-id').value);
+        formData.append('skor_pg', pgBenar);
+        formData.append('jawaban_lengkap', JSON.stringify(answers));
+        formData.append('mata_pelajaran', 'Literasi Digital');
+
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: formData
+        }).then(() => {
+            localStorage.removeItem('asat_answers_digital');
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('exam-body').style.display = 'none';
+            document.getElementById('exam-header').style.display = 'none';
+            document.getElementById('result-page').style.display = 'block';
+        }).catch(() => {
+            alert("Gagal mengirim! Gunakan koneksi yang stabil.");
+            document.getElementById('loading').style.display = 'none';
+        });
+    }
+
+    function startTimer(m) {
+        let t = m * 60;
+        const iv = setInterval(() => {
+            let mn = Math.floor(t/60); let s = t%60;
+            document.getElementById('timer').innerText = `${mn}:${s<10?'0':''}${s}`;
+            if(t-- <= 0) { 
+                clearInterval(iv); 
+                alert("Waktu habis!");
+                submitData(); 
+            }
+        }, 1000);
+    }
+
+    function clearAndReload() {
+        localStorage.removeItem('asat_answers_digital');
+        location.reload();
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.ctrlKey && ['c','v','u','a'].includes(e.key.toLowerCase())) {
+            e.preventDefault();
+            alert("Aksi ini dilarang!");
+        }
+        if (e.key === 'F12') e.preventDefault();
+    });
+</script>
+</body>
+</html>
